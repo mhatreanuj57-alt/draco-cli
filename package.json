@@ -1,0 +1,32 @@
+{
+  "name": "draco-cli",
+  "version": "3.0.1",
+  "description": "Draco — a zero-login, terminal-first AI coding agent for the OpenCode Zen API.",
+  "license": "MIT",
+  "author": "Anuj",
+  "bin": {
+    "draco": "./bin/draco.js"
+  },
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "ai",
+    "cli",
+    "coding-agent",
+    "opencode",
+    "zen",
+    "terminal",
+    "agent"
+  ],
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node bin/draco.js"
+  }
+}
