@@ -3,6 +3,7 @@
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const theme = require('../ui/theme.js');
 
 class PluginManager {
   constructor(config) {
@@ -24,7 +25,7 @@ class PluginManager {
       try {
         await this.loadPlugin(path.join(this.pluginDir, file));
       } catch (error) {
-        console.error(`Failed to load plugin ${file}: ${error.message}`);
+        theme.printError(`Failed to load plugin ${file}: ${error.message}`);
       }
     }
   }
@@ -92,7 +93,7 @@ class PluginManager {
       try {
         result = await handler(result);
       } catch (error) {
-        console.error(`Hook ${hookName} failed in plugin ${plugin}: ${error.message}`);
+        theme.printError(`Hook ${hookName} failed in plugin ${plugin}: ${error.message}`);
       }
     }
 
