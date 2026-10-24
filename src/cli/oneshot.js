@@ -4,6 +4,8 @@ const ui = require('../ui/terminal.js');
 
 async function runOneShot({ prompt, agent }) {
   try {
+    process.stdout.write(`${ui.c.green}➜${ui.c.reset} ${prompt}\n`);
+    ui.divider();
     await agent.runTurn(prompt);
     return 0;
   } catch (e) {
