@@ -99,11 +99,11 @@ function createSession(cfg, ask, options) {
         messages: conversation,
       });
     } catch (err) {
-      ui.warn(`Compaction failed: ${err.message || err}`);
+      ui.error(`Compaction failed: ${err.message || err}`);
       return false;
     }
     if (!summary) {
-      ui.warn('Compaction produced an empty summary; conversation left unchanged.');
+      ui.error('Compaction produced an empty summary; conversation left unchanged.');
       return false;
     }
     state.messages = [
@@ -162,7 +162,7 @@ function createSession(cfg, ask, options) {
     const md = new MarkdownStream();
     for (let round = 1; ; round++) {
       if (round > MAX_TOOL_ROUNDS) {
-        ui.warn(`Stopped after ${MAX_TOOL_ROUNDS} tool rounds in a single turn.`);
+        ui.error(`Stopped after ${MAX_TOOL_ROUNDS} tool rounds in a single turn.`);
         return;
       }
       const model = state.activeModel;
@@ -217,7 +217,7 @@ function createSession(cfg, ask, options) {
         if (emitted) {
           md.end();
           process.stdout.write('\n');
-          ui.warn('Connection dropped mid-stream. Type /retry to resend your last message.');
+          ui.error('Connection dropped mid-stream. Type /retry to resend your last message.');
           return;
         }
         if (err instanceof AbortedError) {
@@ -225,7 +225,7 @@ function createSession(cfg, ask, options) {
           return;
         }
         if (err instanceof Error && err.name === 'AbortError') {
-          ui.warn('Request timed out — connection may have dropped.');
+          ui.error('Request timed out — connection may have dropped.');
           return;
         }
         ui.error(`${err.status ? `API error HTTP ${err.status}: ` : ''}${err.message || err}`);
@@ -274,7 +274,7 @@ function createSession(cfg, ask, options) {
       state.activeController = null;
       state.messages.push({ role: 'assistant', content: acc });
       if (!acc && res.finishReason !== 'stop') {
-        ui.warn('(empty response from model)');
+        ui.error('(empty response from model)');
       }
       return;
     }
