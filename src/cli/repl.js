@@ -20,17 +20,18 @@ async function runRepl({ cfg, rl, lineQueue, agent, mcp }) {
       if (line === null) break;
       const trimmed = line.trim();
       if (!trimmed) continue;
+      ui.divider();
       let result;
       try {
         result = await handle(trimmed, rt);
       } catch (e) {
-        ui.warn(e && e.message ? e.message : String(e));
+        ui.error(e && e.message ? e.message : String(e));
         continue;
       }
       if (result === EXIT) break;
       if (result === false) {
         await agent.runTurn(trimmed).catch((e) => {
-          ui.warn(e && e.message ? e.message : String(e));
+          ui.error(e && e.message ? e.message : String(e));
         });
       }
     }
