@@ -62,7 +62,7 @@ async function ensureApiKey(cfg, nextLine) {
     if (line === null) return false;
     const key = line.trim();
     if (!key) {
-      ui.warn('Key cannot be empty.');
+      ui.error('Key cannot be empty.');
       continue;
     }
     const spinner = new ui.Spinner('Validating key…');
@@ -70,11 +70,11 @@ async function ensureApiKey(cfg, nextLine) {
     const probe = await api_probe(cfg, key);
     spinner.stop();
     if (probe.verdict === 'invalid') {
-      ui.warn(`Key rejected (HTTP ${probe.status}). Check it and try again.`);
+      ui.error(`Key rejected (HTTP ${probe.status}). Check it and try again.`);
       continue;
     }
     if (probe.verdict === 'unreachable') {
-      ui.warn(`Could not reach the API to verify (${probe.detail}). Using the key anyway.`);
+      ui.error(`Could not reach the API to verify (${probe.detail}). Using the key anyway.`);
     }
     cfg.apiKey = key;
     cfg.keySource = 'session';
@@ -95,7 +95,7 @@ async function ensureApiKey(cfg, nextLine) {
       cfg.keySource = 'saved';
       ui.success(`Key saved to ${cfg.configFile}.`);
     } catch (e) {
-      ui.warn(`Could not save key (${e.message}). It will only last this session.`);
+      ui.error(`Could not save key (${e.message}). It will only last this session.`);
     }
   }
   return true;
