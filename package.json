@@ -1,6 +1,6 @@
 {
   "name": "draco-cli",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "Draco — a zero-login, terminal-first AI coding agent for the OpenCode Zen API.",
   "license": "MIT",
   "author": "Anuj",
