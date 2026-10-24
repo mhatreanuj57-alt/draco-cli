@@ -75,7 +75,7 @@ async function handle(line, rt) {
           `${ui.c.gray}(active marked with *; some accounts use an "opencode/" prefix — switch with /model opencode/<id>)${ui.c.reset}\n`
         );
       } catch (e) {
-        ui.warn(
+        ui.error(
           `Could not fetch live registry (${e.message || e}). Showing cached known free models:`
         );
         for (const id of config.KNOWN_FREE_MODELS) {
@@ -96,7 +96,7 @@ async function handle(line, rt) {
         config.persistConfig({ model: arg });
         ui.success(`Model set to ${arg} (persisted to ${cfg.configFile}).`);
       } catch (e) {
-        ui.warn(`Model switched to ${arg} for this session, but persisting failed: ${e.message}`);
+        ui.error(`Model switched to ${arg} for this session, but persisting failed: ${e.message}`);
       }
       return true;
     }
@@ -129,7 +129,7 @@ async function handle(line, rt) {
       }
       const mode = arg.toLowerCase();
       if (!modes.includes(mode)) {
-        ui.warn(`Unknown mode "${arg}". Use one of: ${modes.join(', ')}.`);
+        ui.error(`Unknown mode "${arg}". Use one of: ${modes.join(', ')}.`);
         return true;
       }
       cfg.approvals = mode;
@@ -169,7 +169,7 @@ async function handle(line, rt) {
       if (rt.agent.importSession(chosen.data)) {
         ui.success(`Resumed session from ${chosen.data.cwd} (${chosen.data.model}).`);
       } else {
-        ui.warn('That session could not be restored.');
+        ui.error('That session could not be restored.');
       }
       return true;
     }
@@ -220,7 +220,7 @@ async function handle(line, rt) {
         fs.writeFileSync(target, template);
         ui.success(`Created ${target}. Fill it in — Draco reads it automatically every session.`);
       } catch (e) {
-        ui.warn(`Could not write AGENTS.md: ${e.message}`);
+        ui.error(`Could not write AGENTS.md: ${e.message}`);
       }
       return true;
     }
@@ -262,7 +262,7 @@ async function handle(line, rt) {
       return EXIT;
 
     default:
-      ui.warn(`Unknown command "${cmdRaw}". Type /help for commands.`);
+      ui.error(`Unknown command "${cmdRaw}". Type /help for commands.`);
       return true;
   }
 }
