@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const theme = require('../ui/theme.js');
 
 class ConfigManager {
   constructor(options = {}) {
@@ -29,7 +30,7 @@ class ConfigManager {
         this.config = JSON.parse(data);
       }
     } catch (error) {
-      console.error(`Failed to load config: ${error.message}`);
+      theme.printError(`Failed to load config: ${error.message}`);
       this.config = {};
     }
 
@@ -45,7 +46,7 @@ class ConfigManager {
       fs.writeFileSync(this.configFile, JSON.stringify(this.config, null, 2));
       this.notifyWatchers();
     } catch (error) {
-      console.error(`Failed to save config: ${error.message}`);
+      theme.printError(`Failed to save config: ${error.message}`);
     }
 
     return this;
