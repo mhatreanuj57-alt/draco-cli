@@ -195,7 +195,7 @@ class McpManager {
         const tools = await server.connect();
         summaries.push(`${server.name}: ${tools.length} tool(s)`);
       } catch (e) {
-        ui.warn(`MCP server "${server.name}" failed to start (${e.message}). Continuing without it.`);
+        ui.error(`MCP server "${server.name}" failed to start (${e.message}). Continuing without it.`);
       }
     }
     return summaries;
