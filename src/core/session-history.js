@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const theme = require('../ui/theme.js');
 
 class SessionHistory {
   constructor(config) {
@@ -26,7 +27,7 @@ class SessionHistory {
         this.currentIndex = this.sessions.length - 1;
       }
     } catch (error) {
-      console.error(`Failed to load history: ${error.message}`);
+      theme.printError(`Failed to load history: ${error.message}`);
       this.sessions = [];
     }
   }
@@ -41,7 +42,7 @@ class SessionHistory {
       const sessionsToSave = this.sessions.slice(-this.maxSessions);
       fs.writeFileSync(this.historyFile, JSON.stringify(sessionsToSave, null, 2));
     } catch (error) {
-      console.error(`Failed to save history: ${error.message}`);
+      theme.printError(`Failed to save history: ${error.message}`);
     }
   }
 
