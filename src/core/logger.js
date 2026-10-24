@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const theme = require('../ui/theme.js');
 
 class Logger {
   constructor(options = {}) {
@@ -36,7 +37,7 @@ class Logger {
           fs.mkdirSync(this.logDir, { recursive: true });
         }
       } catch (err) {
-        console.error(`Failed to create log directory: ${err.message}`);
+        theme.printError(`Failed to create log directory: ${err.message}`);
         this.file = false;
       }
     }
@@ -77,7 +78,7 @@ class Logger {
         this.rotateFile(logFile);
       }
     } catch (error) {
-      console.error(`Failed to write to log file: ${error.message}`);
+      theme.printError(`Failed to write to log file: ${error.message}`);
     }
   }
 
@@ -100,7 +101,7 @@ class Logger {
         fs.renameSync(filePath, `${filePath}.1`);
       }
     } catch (error) {
-      console.error(`Failed to rotate log file: ${error.message}`);
+      theme.printError(`Failed to rotate log file: ${error.message}`);
     }
   }
 
@@ -110,8 +111,12 @@ class Logger {
     const formatted = this.formatMessage(level, message, data);
 
     if (this.console) {
-      const color = this.colors[level] || '';
-      console.log(`${color}${formatted}${this.colors.reset}`);
+      if (level === 'error') {
+        console.error(theme.errorTag(formatted));
+      } else {
+        const color = this.colors[level] || '';
+        console.log(`${color}${formatted}${this.colors.reset}`);
+      }
     }
 
     this.writeToFile(level, formatted);
@@ -179,7 +184,7 @@ class Logger {
       }
       return true;
     } catch (error) {
-      console.error(`Failed to clear logs: ${error.message}`);
+      theme.printError(`Failed to clear logs: ${error.message}`);
       return false;
     }
   }
