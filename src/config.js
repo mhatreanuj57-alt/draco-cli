@@ -184,7 +184,9 @@ function resolveConfig(cliFlags) {
     configFile: configFilePath(),
   };
 
-  return validateConfig(config);
+  const validated = validateConfig(config);
+  validated.config.warnings = validated.warnings;
+  return validated.config;
 }
 
 module.exports = {
