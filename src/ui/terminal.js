@@ -1,44 +1,18 @@
 'use strict';
 
+const theme = require('./theme.js');
+
 const tty = process.stdout.isTTY;
 
-const c = {
-  reset: tty ? '\x1b[0m' : '',
-  bold: tty ? '\x1b[1m' : '',
-  dim: tty ? '\x1b[2m' : '',
-  red: tty ? '\x1b[31m' : '',
-  green: tty ? '\x1b[32m' : '',
-  yellow: tty ? '\x1b[33m' : '',
-  blue: tty ? '\x1b[34m' : '',
-  magenta: tty ? '\x1b[35m' : '',
-  cyan: tty ? '\x1b[36m' : '',
-  gray: tty ? '\x1b[90m' : '',
-};
-
-const GLYPHS = {
-  D: ['██████╗ ', '██╔══██╗', '██║  ██║', '██║  ██║', '██║  ██║', '╚█████╔╝', ' ╚════╝ '],
-  R: ['██████╗ ', '██╔══██╗', '██████╔╝', '██╔══██╗', '██║  ██║', '╚██╗ ██╔╝', ' ╚═══╝ '],
-  A: [' █████╗ ', '██╔══██╗', '███████║', '██╔══██║', '██║  ██║', '╚═╗  ╚═╝', '        '],
-  C: [' ██████╗', '██╔════╝', '██║     ', '██║     ', '██║     ', '╚█████╗ ', ' ╚════╝ '],
-  O: [' ██████╗ ', '██╔═══██╗', '██║   ██║', '██║   ██║', '██║   ██║', '╚██████╔╝', ' ╚═════╝ '],
-};
-
-const LOGO = (() => {
-  const rows = [];
-  for (let r = 0; r < 7; r++) {
-    rows.push('DRACO'.split('').map((ch) => GLYPHS[ch][r]).join(' ').replace(/\s+$/, ''));
-  }
-  return rows;
-})();
+const c = theme.c;
 
 function splash(cfg) {
-  for (const line of LOGO) process.stdout.write(c.red + c.bold + line + c.reset + '\n');
+  process.stdout.write(theme.welcomeBanner(cfg) + '\n');
   process.stdout.write('\n');
-  process.stdout.write(`${c.bold}Draco CLI v${cfg.version}${c.reset}\n`);
-  process.stdout.write('Endpoint: OpenCode Zen API Server\n');
-  process.stdout.write('Model: Free Dynamic Routing Tier\n');
+  process.stdout.write(`Endpoint: OpenCode Zen API Server\n`);
+  process.stdout.write(`Model: Free Dynamic Routing Tier\n`);
   process.stdout.write('\n');
-  process.stdout.write(`Workspace: ${cfg.workspaceRoot}\n`);
+  process.stdout.write(`${c.bold}Workspace:${c.reset} ${cfg.workspaceRoot}\n`);
   process.stdout.write(`${c.gray}Active model: ${cfg.model}${c.reset}\n`);
   process.stdout.write(`Type ${c.cyan}/help${c.reset} for commands. ${c.gray}Esc stops a response.${c.reset}\n`);
   if (!cfg.searchApiKey) {
@@ -49,8 +23,24 @@ function splash(cfg) {
   process.stdout.write('\n');
 }
 
+function clearScreen() {
+  theme.clearScreen();
+}
+
 function promptText(basename) {
-  return `${c.green}draco${c.reset} ${c.magenta}${basename}${c.reset} ${c.cyan}❯${c.reset} `;
+  return `${c.green}➜${c.reset} ${c.cyan}${basename}${c.reset} `;
+}
+
+function divider(label) {
+  process.stdout.write(theme.dividerLine(label) + '\n');
+}
+
+function responseStart() {
+  process.stdout.write(theme.responseRule('top') + '\n');
+}
+
+function responseEnd() {
+  process.stdout.write(theme.responseRule('bottom') + '\n');
 }
 
 function info(msg) {
@@ -66,7 +56,7 @@ function warn(msg) {
 }
 
 function error(msg) {
-  process.stdout.write(`${c.red}✖ ${msg}${c.reset}\n`);
+  process.stdout.write(theme.errorTag(msg) + '\n');
 }
 
 function toolStart(name, args) {
@@ -106,4 +96,19 @@ class Spinner {
   }
 }
 
-module.exports = { c, splash, promptText, info, success, warn, error, toolStart, Spinner };
+module.exports = {
+  c,
+  theme,
+  splash,
+  clearScreen,
+  divider,
+  responseStart,
+  responseEnd,
+  promptText,
+  info,
+  success,
+  warn,
+  error,
+  toolStart,
+  Spinner,
+};
