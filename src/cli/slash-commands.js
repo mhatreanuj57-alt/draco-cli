@@ -72,7 +72,7 @@ async function handle(line, rt) {
           process.stdout.write(`${marker}${id}\n`);
         }
         process.stdout.write(
-          `${ui.c.gray}(active marked with *; some accounts use an "opencode/" prefix — switch with /model opencode/<id>)${ui.c.reset}\n`
+          `${ui.c.gray}(active marked with *; switch with /model <id>)${ui.c.reset}\n`
         );
       } catch (e) {
         ui.error(
@@ -233,6 +233,7 @@ async function handle(line, rt) {
       const mcpCount = rt.mcp ? rt.mcp.listTools().length : 0;
       const lines = [
         `version:       ${cfg.version}`,
+        `provider:      ${cfg.provider || 'Google AI Studio'}`,
         `endpoint:      ${cfg.apiBase}`,
         `model:         ${rt.agent.activeModel}`,
         `approvals:     ${cfg.approvals}`,

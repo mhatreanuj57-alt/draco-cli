@@ -9,8 +9,8 @@ const c = theme.c;
 function splash(cfg) {
   process.stdout.write(theme.welcomeBanner(cfg) + '\n');
   process.stdout.write('\n');
-  process.stdout.write(`Endpoint: OpenCode Zen API Server\n`);
-  process.stdout.write(`Model: Free Dynamic Routing Tier\n`);
+  process.stdout.write(`Endpoint: ${cfg.provider || 'Google AI Studio'} (Gemini API)\n`);
+  process.stdout.write(`${c.gray}Free-tier models via aistudio.google.com${c.reset}\n`);
   process.stdout.write('\n');
   process.stdout.write(`${c.bold}Workspace:${c.reset} ${cfg.workspaceRoot}\n`);
   process.stdout.write(`${c.gray}Active model: ${cfg.model}${c.reset}\n`);

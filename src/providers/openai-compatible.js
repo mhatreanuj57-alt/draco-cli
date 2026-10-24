@@ -5,7 +5,15 @@ const {
   MODELS_TIMEOUT_MS,
 } = require('../config.js');
 
-const DEFAULT_PROBE_MODEL = 'nemotron-3-ultra-free';
+const DEFAULT_PROBE_MODEL = 'gemini-3.8-flash';
+
+function endpoint(cfg, suffix) {
+  return `${cfg.apiBase}${cfg.apiPath || ''}/${suffix}`;
+}
+
+function probeModel(cfg) {
+  return (cfg.model && cfg.model.trim()) || DEFAULT_PROBE_MODEL;
+}
 
 class ApiError extends Error {
   constructor(status, message, bodyText) {
@@ -64,7 +72,7 @@ async function listModels(cfg) {
   try {
     let res;
     try {
-      res = await fetch(`${cfg.apiBase}/zen/v1/models`, {
+      res = await fetch(endpoint(cfg, 'models'), {
         signal: controller.signal,
         headers: { Authorization: `Bearer ${cfg.apiKey}` },
       });
@@ -132,7 +140,7 @@ async function streamChatCompletion(opts) {
 
   let res;
   try {
-    res = await fetch(`${cfg.apiBase}/zen/v1/chat/completions`, {
+    res = await fetch(endpoint(cfg, 'chat/completions'), {
       method: 'POST',
       signal: controller.signal,
       headers: {
@@ -253,7 +261,7 @@ async function probeApiKey(cfg, apiKey) {
   try {
     let res;
     try {
-      res = await fetch(`${cfg.apiBase}/zen/v1/chat/completions`, {
+      res = await fetch(endpoint(cfg, 'chat/completions'), {
         method: 'POST',
         signal: controller.signal,
         headers: {
@@ -261,7 +269,7 @@ async function probeApiKey(cfg, apiKey) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: DEFAULT_PROBE_MODEL,
+          model: probeModel(cfg),
           messages: [{ role: 'user', content: 'ping' }],
           max_tokens: 1,
         }),
@@ -272,12 +280,21 @@ async function probeApiKey(cfg, apiKey) {
       }
       return { verdict: 'unreachable', detail: e.message };
     }
-    if (res.ok || res.status === 429 || res.status === 400) {
-      // 429 = rate-limited but authenticated; 400 ModelError = auth fine, model busy
+    if (res.ok || res.status === 429) {
+      // 429 = rate-limited but authenticated
       return { verdict: 'ok', status: res.status };
     }
     if (res.status === 401 || res.status === 403) {
       return { verdict: 'invalid', status: res.status };
+    }
+    if (res.status === 400) {
+      // Gemini reports a bad key as 400 INVALID_ARGUMENT, so inspect the body.
+      // A real model/param error still means the key itself was accepted.
+      const body = await safeBodyText(res);
+      if (/api key|api_key|API_KEY|unauthenticated|permission/i.test(body)) {
+        return { verdict: 'invalid', status: res.status };
+      }
+      return { verdict: 'ok', status: res.status };
     }
     return { verdict: 'unknown', status: res.status };
   } finally {

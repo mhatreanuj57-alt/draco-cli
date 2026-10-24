@@ -1,7 +1,7 @@
 {
   "name": "draco-cli",
-  "version": "3.0.3",
-  "description": "Draco — a zero-login, terminal-first AI coding agent for the OpenCode Zen API.",
+  "version": "3.1.0",
+  "description": "Draco — a terminal-first AI coding agent powered by the Gemini API (Google AI Studio).",
   "license": "MIT",
   "author": "Anuj",
   "bin": {
@@ -15,8 +15,8 @@
     "ai",
     "cli",
     "coding-agent",
-    "opencode",
-    "zen",
+    "gemini",
+    "google-ai-studio",
     "terminal",
     "agent"
   ],

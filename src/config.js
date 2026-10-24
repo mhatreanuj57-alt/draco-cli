@@ -12,15 +12,23 @@ try {
   // keep fallback version
 }
 
-const DEFAULT_API_BASE = 'https://opencode.ai';
-const DEFAULT_MODEL = 'nemotron-3-ultra-free';
-const DEFAULT_FALLBACK_CHAIN = [
-  'nemotron-3-ultra-free',
-  'deepseek-v4-flash-free',
-  'big-pickle',
-  'mimo-v2.5-free',
+const PROVIDER_NAME = 'Google AI Studio';
+const DEFAULT_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/openai';
+const DEFAULT_API_PATH = '';
+const DEFAULT_MODEL = 'gemini-3.8-flash';
+const DEFAULT_FALLBACK_CHAIN = ['gemini-3.8-flash', 'gemini-3.1-pro-preview'];
+const KNOWN_FREE_MODELS = [
+  'gemini-3.8-flash',
+  'gemini-3.7-flash',
+  'gemini-3.6-flash',
+  'gemini-3.5-flash',
+  'gemini-3.5-flash-lite',
+  'gemini-3.1-pro-preview',
+  'gemini-3.1-flash-lite',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.5-pro',
 ];
-const KNOWN_FREE_MODELS = DEFAULT_FALLBACK_CHAIN.slice();
 
 const CHAT_TIMEOUT_MS = 60000;
 const MODELS_TIMEOUT_MS = 15000;
@@ -117,11 +125,15 @@ function validateConfig(config) {
   const warnings = [];
   
   if (!config.apiKey) {
-    warnings.push('No API key configured. Set OPENCODE_ZEN_KEY or enter when prompted.');
+    warnings.push(
+      'No API key configured. Get one at https://aistudio.google.com/apikey and set GEMINI_API_KEY.'
+    );
   }
-  
-  if (config.model && !KNOWN_FREE_MODELS.includes(config.model) && !config.model.includes('/')) {
-    warnings.push(`Model "${config.model}" is not in the known free models list.`);
+
+  if (config.model && !KNOWN_FREE_MODELS.includes(config.model)) {
+    warnings.push(
+      `Model "${config.model}" is not on the Gemini free-tier list. It may be paid-only or invalid.`
+    );
   }
   
   if (config.fallbackChain && config.fallbackChain.length === 0) {
@@ -160,10 +172,10 @@ function resolveConfig(cliFlags) {
       ? persisted.fallbackChain
       : DEFAULT_FALLBACK_CHAIN.slice();
 
-  let apiKey = env.OPENCODE_ZEN_KEY || '';
+  let apiKey = env.GEMINI_API_KEY || env.GOOGLE_API_KEY || '';
   let keySource = null;
   if (apiKey) {
-    keySource = 'environment';
+    keySource = env.GEMINI_API_KEY ? 'environment' : 'environment (GOOGLE_API_KEY)';
   } else if (typeof persisted.apiKey === 'string' && persisted.apiKey.trim()) {
     apiKey = persisted.apiKey.trim();
     keySource = 'saved';
@@ -171,9 +183,11 @@ function resolveConfig(cliFlags) {
 
   const config = {
     version: VERSION,
+    provider: PROVIDER_NAME,
     apiKey,
     keySource,
-    apiBase: (env.DRACO_API_BASE || DEFAULT_API_BASE).replace(/\/+$/, ''),
+    apiBase: DEFAULT_API_BASE,
+    apiPath: DEFAULT_API_PATH,
     model,
     yolo,
     approvals,
@@ -194,6 +208,8 @@ module.exports = {
   APPROVAL_MODES,
   DEFAULT_APPROVALS,
   DEFAULT_API_BASE,
+  DEFAULT_API_PATH,
+  PROVIDER_NAME,
   DEFAULT_MODEL,
   DEFAULT_FALLBACK_CHAIN,
   KNOWN_FREE_MODELS,

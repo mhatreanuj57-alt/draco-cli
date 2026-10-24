@@ -33,11 +33,11 @@ function printUsage() {
       'One-shot mode:   draco "your prompt here" — answer once, then exit',
       '',
       'Environment:',
-      '  OPENCODE_ZEN_KEY        Optional. Skips the first-run key prompt.',
-      '  DRACO_MODEL             Default model override (default: nemotron-3-ultra-free)',
+      '  GEMINI_API_KEY          Google AI Studio key (skips the first-run prompt)',
+      '  GOOGLE_API_KEY          Alias of GEMINI_API_KEY',
+      '  DRACO_MODEL             Default model override (default: gemini-3.8-flash)',
       '  DRACO_APPROVALS         suggest | auto-edit | full-auto',
       '  DRACO_YOLO              "true" to auto-approve shell commands',
-      '  DRACO_API_BASE          Override the API endpoint',
       '  DRACO_SEARCH_PROVIDER   Search backend when a key is set (default: brave)',
       '  DRACO_SEARCH_API_KEY    Optional. Use Brave instead of built-in DuckDuckGo',
     ].join('\n') + '\n'
@@ -55,9 +55,11 @@ function installGlobalHandlers() {
 
 async function ensureApiKey(cfg, nextLine) {
   if (cfg.apiKey) return true;
-  ui.info('No API key found. Get a free one at https://opencode.ai');
+  ui.info('No API key found. Create a free one at https://aistudio.google.com/apikey');
   for (let attempt = 0; attempt < 5; attempt++) {
-    process.stdout.write(`${ui.c.yellow}?${ui.c.reset} Enter your OpenCode Zen API key: `);
+    process.stdout.write(
+      `${ui.c.yellow}?${ui.c.reset} Paste your Google AI Studio API key: `
+    );
     const line = await nextLine();
     if (line === null) return false;
     const key = line.trim();
@@ -205,7 +207,7 @@ async function main(argv) {
 
   const hasKey = await ensureApiKey(cfg, nextLine);
   if (!hasKey) {
-    ui.error('No API key provided. Set OPENCODE_ZEN_KEY or enter it when prompted.');
+    ui.error('No API key provided. Set GEMINI_API_KEY or enter it when prompted.');
     process.exit(1);
   }
 
