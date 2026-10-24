@@ -1,5 +1,7 @@
 'use strict';
 
+const theme = require('../ui/theme.js');
+
 class MiddlewarePipeline {
   constructor() {
     this.middlewares = [];
@@ -58,7 +60,7 @@ const errorMiddleware = async (context, next) => {
   try {
     await next();
   } catch (error) {
-    console.error(`Error: ${error.message}`);
+    theme.printError(error.message);
     context.error = error;
   }
 };
