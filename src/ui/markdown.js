@@ -1,19 +1,10 @@
 'use strict';
 
+const theme = require('./theme.js');
+
 const tty = process.stdout.isTTY;
 
-const c = {
-  reset: '\x1b[0m',
-  bold: '\x1b[1m',
-  italic: '\x1b[3m',
-  dim: '\x1b[2m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
-};
+const c = theme.c;
 
 function inline(line) {
   let out = line;
@@ -27,23 +18,25 @@ function renderLine(line, state) {
   if (state.fence) {
     if (/^\s*```/.test(line)) {
       state.fence = false;
-      return `${c.dim}\u2502${c.reset}`;
+      return `${c.dim}└─ code${c.reset}`;
     }
-    return `${c.dim}\u2502${c.reset} ${c.blue}${line}${c.reset}`;
+    return `${c.blue}${line}${c.reset}`;
   }
-  if (/^\s*```/.test(line)) {
+  const fence = /^\s*```(.*)$/.exec(line);
+  if (fence) {
     state.fence = true;
-    return `${c.dim}\u2502${c.reset}`;
+    const lang = (fence[1] || '').trim();
+    return `${c.dim}┌─ code${lang ? ` ${lang}` : ''}${c.reset}`;
   }
   const h = /^(#{1,6})\s+(.*)$/.exec(line);
   if (h) {
     const level = h[1].length;
-    const color = level <= 2 ? c.bold : c.magenta;
+    const color = level <= 2 ? c.bold : c.magenta || c.purple;
     return `${color}${h[2]}${c.reset}`;
   }
   const bullet = /^(\s*)[-*]\s+(.*)$/.exec(line);
   if (bullet) {
-    return `${bullet[1]}${c.cyan}\u2022${c.reset} ${inline(bullet[2])}`;
+    return `${bullet[1]}${c.cyan}•${c.reset} ${inline(bullet[2])}`;
   }
   const numbered = /^(\s*)(\d+\.)\s+(.*)$/.exec(line);
   if (numbered) {
@@ -57,6 +50,19 @@ class MarkdownStream {
     this.buffer = '';
     this.state = { fence: false };
     this.started = false;
+    this.blockOpen = false;
+  }
+
+  openBlock() {
+    if (!tty || this.blockOpen) return;
+    this.blockOpen = true;
+    process.stdout.write(theme.responseRule('top') + '\n');
+  }
+
+  closeBlock() {
+    if (!tty || !this.blockOpen) return;
+    this.blockOpen = false;
+    process.stdout.write(theme.responseRule('bottom') + '\n');
   }
 
   write(chunk) {
@@ -76,11 +82,14 @@ class MarkdownStream {
   flushLine(lineWithNewline) {
     const hadNewline = lineWithNewline.endsWith('\n');
     const text = hadNewline ? lineWithNewline.slice(0, -1) : lineWithNewline;
-    if (text.trim() === '' ) {
-      process.stdout.write('\n');
+    this.openBlock();
+    if (text.trim() === '') {
+      process.stdout.write(theme.gutter() + (hadNewline ? '\n' : ''));
       return;
     }
-    process.stdout.write(renderLine(text, this.state) + (hadNewline ? '\n' : ''));
+    process.stdout.write(
+      `${theme.gutter()} ${renderLine(text, this.state)}` + (hadNewline ? '\n' : '')
+    );
   }
 
   end() {
@@ -88,8 +97,9 @@ class MarkdownStream {
     if (this.buffer.length > 0) {
       const rest = this.buffer;
       this.buffer = '';
-      this.flushLine(rest);
+      this.flushLine(rest.endsWith('\n') ? rest : `${rest}\n`);
     }
+    this.closeBlock();
   }
 }
 
