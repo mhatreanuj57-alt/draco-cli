@@ -9,6 +9,8 @@ const { extractImages } = require('./images.js');
 const { compactConversation } = require('./compaction.js');
 const { saveSession } = require('./sessions-store.js');
 const ui = require('../ui/terminal.js');
+const { isTui } = require('../ui/tui/sink.js');
+const store = require('../ui/tui/store.js');
 
 const MAX_TOOL_ROUNDS = 12;
 const MAX_TOOL_RESULT_CHARS = 16000;
@@ -173,6 +175,8 @@ function createSession(cfg, ask, options) {
       let acc = '';
       let emitted = false;
       let res;
+      const tui = isTui();
+      if (tui) store.beginLive('assistant');
       try {
         res = await streamChatCompletion({
           cfg,
@@ -185,7 +189,9 @@ function createSession(cfg, ask, options) {
             if (!emitted) {
               emitted = true;
               spinner.stop();
+              if (tui) store.setStatus({ model });
             }
+            if (tui) store.setLiveText(acc);
             md.write(t);
           },
         });
@@ -194,13 +200,15 @@ function createSession(cfg, ask, options) {
         spinner.stop();
         if (err instanceof AbortedError || controller.signal.aborted) {
           md.end();
-          if (emitted) process.stdout.write('\n');
+          if (tui) store.endLive({ truncated: true });
+          else if (emitted) process.stdout.write('\n');
           ui.warn('⏹ Response stopped. Type /retry to resend your last message.');
           return;
         }
         if (isFallbackable(err) && !emitted) {
           const nextModel = nextFallback(cfg.fallbackChain, model);
           if (nextModel) {
+            if (tui) store.discardLive();
             ui.warn(
               `Switching to backup model: ${nextModel} — ${model} hit ${
                 err.status === 429 ? 'a rate limit' : 'an availability error'
@@ -209,6 +217,7 @@ function createSession(cfg, ask, options) {
             state.activeModel = nextModel;
             continue;
           }
+          if (tui) store.discardLive();
           ui.error(
             `All models in the fallback chain failed. Use /models to pick another manually.`
           );
@@ -216,10 +225,12 @@ function createSession(cfg, ask, options) {
         }
         if (emitted) {
           md.end();
-          process.stdout.write('\n');
+          if (tui) store.endLive({ errored: true });
+          else process.stdout.write('\n');
           ui.error('Connection dropped mid-stream. Type /retry to resend your last message.');
           return;
         }
+        if (tui) store.discardLive();
         if (err instanceof AbortedError) {
           ui.warn(err.message);
           return;
@@ -233,9 +244,19 @@ function createSession(cfg, ask, options) {
       }
       if (emitted) {
         md.end();
-        process.stdout.write('\n');
+        if (tui) store.endLive();
+        else process.stdout.write('\n');
+      } else if (tui) {
+        store.discardLive();
       }
       state.usage.outputChars += acc.length;
+      if (tui && res.usage) {
+        store.setSidebar({
+          tokensIn: res.usage.prompt_tokens || 0,
+          tokensOut: res.usage.completion_tokens || 0,
+        });
+      }
+      if (tui) store.setStatus({ model });
 
       const toolCalls = res.toolCalls || [];
       if (toolCalls.length > 0) {

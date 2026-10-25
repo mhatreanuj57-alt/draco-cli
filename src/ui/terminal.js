@@ -1,6 +1,8 @@
 'use strict';
 
 const theme = require('./theme.js');
+const { isTui } = require('./tui/sink.js');
+const store = require('./tui/store.js');
 
 const tty = process.stdout.isTTY;
 
@@ -32,6 +34,10 @@ function promptText(basename) {
 }
 
 function divider(label) {
+  if (isTui()) {
+    store.push({ kind: 'rule', label: label || '' });
+    return;
+  }
   process.stdout.write(theme.dividerLine(label) + '\n');
 }
 
@@ -44,18 +50,34 @@ function responseEnd() {
 }
 
 function info(msg) {
+  if (isTui()) {
+    store.push({ kind: 'info', text: msg });
+    return;
+  }
   process.stdout.write(`${c.blue}ℹ${c.reset} ${msg}\n`);
 }
 
 function success(msg) {
+  if (isTui()) {
+    store.push({ kind: 'success', text: msg });
+    return;
+  }
   process.stdout.write(`${c.green}✔${c.reset} ${msg}\n`);
 }
 
 function warn(msg) {
+  if (isTui()) {
+    store.push({ kind: 'warn', text: msg });
+    return;
+  }
   process.stdout.write(`${c.yellow}⚠ ${msg}${c.reset}\n`);
 }
 
 function error(msg) {
+  if (isTui()) {
+    store.push({ kind: 'error', text: msg });
+    return;
+  }
   process.stdout.write(theme.errorTag(msg) + '\n');
 }
 
@@ -67,6 +89,10 @@ function toolStart(name, args) {
     summary = '';
   }
   if (summary.length > 100) summary = summary.slice(0, 97) + '...';
+  if (isTui()) {
+    store.push({ kind: 'tool', name, summary });
+    return;
+  }
   process.stdout.write(`${c.cyan}● ${name}${c.reset} ${c.dim}${summary}${c.reset}\n`);
 }
 
@@ -77,9 +103,15 @@ class Spinner {
     this.text = text || 'Thinking…';
     this.timer = null;
     this.frame = 0;
+    this.tuiActive = false;
   }
 
   start() {
+    if (isTui()) {
+      this.tuiActive = true;
+      store.setStatus({ thinking: true, startedAt: Date.now(), thinkingText: this.text });
+      return;
+    }
     if (!tty || this.timer) return;
     this.timer = setInterval(() => {
       const f = SPINNER_FRAMES[this.frame++ % SPINNER_FRAMES.length];
@@ -88,6 +120,11 @@ class Spinner {
   }
 
   stop() {
+    if (this.tuiActive) {
+      this.tuiActive = false;
+      store.setStatus({ thinking: false, thinkingText: '' });
+      return;
+    }
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;

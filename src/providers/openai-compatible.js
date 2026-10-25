@@ -187,6 +187,7 @@ async function streamChatCompletion(opts) {
   const decoder = new TextDecoder();
   let buffer = '';
   let finishReason = null;
+  let usage = null;
   const parts = new Map();
   let done = false;
 
@@ -221,6 +222,9 @@ async function streamChatCompletion(opts) {
             res.status;
           throw new ApiError(status, msg);
         }
+        // Usage arrives on a trailing chunk whose choices[] is empty, so
+        // capture it before the `if (!choice) continue` guard below.
+        if (evt.usage) usage = evt.usage;
         const choice = evt.choices && evt.choices[0];
         if (!choice) continue;
         if (choice.finish_reason) finishReason = choice.finish_reason;
@@ -272,7 +276,7 @@ async function streamChatCompletion(opts) {
       function: { name: p.name, arguments: p.arguments || '{}' },
     }));
 
-  return { toolCalls, finishReason };
+  return { toolCalls, finishReason, usage };
 }
 
 async function probeApiKey(cfg, apiKey) {
