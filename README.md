@@ -1,15 +1,16 @@
 # Draco CLI
 
-![Node.js 18+](https://img.shields.io/badge/Node.js-18%2B-green)
+![Node.js 22+](https://img.shields.io/badge/Node.js-22%2B-green)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green)
 ![Author: Anuj Mhatre](https://img.shields.io/badge/Author-Anuj%20Mhatre-orange)
 
 ## Why We Built This
 
-Developers need AI coding assistance directly in their terminal without switching contexts. Draco CLI provides a zero-login, terminal-first AI coding agent powered by the OpenCode Zen API.
+Developers need AI coding assistance directly in their terminal without switching contexts. Draco CLI provides a zero-login, terminal-first AI coding agent powered by Google's Gemini API (AI Studio free tier).
 
 ## What It Does
 
+- Full-screen TUI with chat pane, status bar and sidebar (session/context/tools)
 - Interactive REPL for AI-assisted coding in the terminal
 - One-shot mode for quick questions: `draco "explain this error"`
 - Auto-apply file edits with configurable approval levels
@@ -19,9 +20,9 @@ Developers need AI coding assistance directly in their terminal without switchin
 
 ## How It Was Built
 
-- **Runtime:** Node.js 18+ with CommonJS modules
-- **API:** OpenAI-compatible (OpenCode Zen)
-- **Interface:** readline-based terminal UI with color support
+- **Runtime:** Node.js 22+ with CommonJS modules
+- **API:** OpenAI-compatible endpoint backed by Gemini
+- **Interface:** Full-screen Ink (React) TUI with readline fallback for piped use
 - **Architecture:** Modular (CLI args, session management, providers, tools)
 - **MCP:** Model Context Protocol for tool integrations
 
@@ -38,7 +39,7 @@ node bin/draco.js
 draco "write a Python hello world"
 
 # With specific model
-draco --model=gpt-4 "refactor this function"
+draco --model=gemini-3.1-pro-preview "refactor this function"
 ```
 
 **Environment Variables:**
@@ -71,14 +72,24 @@ draco-cli/
 │   ├── providers/        # AI provider integrations
 │   ├── tools/            # File/shell tools
 │   ├── integrations/     # MCP client
-│   └── ui/               # Terminal UI utilities
+│   └── ui/               # Terminal UI
+│       ├── tui/          # Full-screen Ink interface (chat, sidebar, input)
+│       ├── terminal.js   # Dual-mode output (TUI store vs stdout)
+│       └── markdown.js   # Markdown streaming renderer
+├── test/                 # Automated TUI test suites
 ├── package.json          # Dependencies
 └── ARCHITECTURE.md       # Detailed architecture docs
 ```
 
-## Test Results
+## Tests
 
-Manual CLI testing. No automated test suite (interactive terminal project).
+```bash
+npm test
+```
+
+Four suites (54 assertions): component render, input/scroll/modal interaction,
+session streaming with a stubbed provider, and an end-to-end boot that drives
+the real entry point through Ink.
 
 ## License
 
