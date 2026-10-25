@@ -1,6 +1,6 @@
 {
   "name": "draco-cli",
-  "version": "3.1.1",
+  "version": "3.2.0",
   "description": "Draco — a terminal-first AI coding agent powered by the Gemini API (Google AI Studio).",
   "license": "MIT",
   "author": "Anuj",
@@ -9,7 +9,7 @@
   },
   "main": "src/index.js",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   },
   "keywords": [
     "ai",
@@ -27,6 +27,14 @@
     "LICENSE"
   ],
   "scripts": {
-    "start": "node bin/draco.js"
+    "start": "node bin/draco.js",
+    "test": "node test/tui-smoke.js && node test/tui-interact.js && node test/tui-session.js && node test/tui-e2e.js",
+    "test:syntax": "node -e \"require('fs').readdirSync('src',{recursive:true}).filter(f=>f.endsWith('.js')).forEach(f=>require('child_process').execSync('node --check src/'+f))\""
+  },
+  "dependencies": {
+    "ink": "^8.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "wrap-ansi": "^9.0.2"
   }
 }
