@@ -78,7 +78,12 @@ async function listModels(cfg) {
       });
     } catch (e) {
       if (e.name === 'AbortError') {
-        throw new ApiError(0, 'Request timed out — connection may have dropped.');
+        throw new ApiError(
+          0,
+          `Gemini did not respond within ${Math.round(
+            MODELS_TIMEOUT_MS / 1000
+          )}s. The free tier may be rate-limiting you — try /models again shortly.`
+        );
       }
       throw new ApiError(0, `Network error: ${e.message}`);
     }
@@ -123,7 +128,13 @@ class AbortedError extends Error {
 async function streamChatCompletion(opts) {
   const { cfg, model, messages, tools, onDelta, signal } = opts;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
+  // Idle timeout: every received chunk resets it, so only a genuinely stalled
+  // connection aborts — an actively streaming (but slow) reply never does.
+  let timer = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
+  const bump = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);
+  };
   let externalAborted = false;
   const onExternalAbort = () => {
     externalAborted = true;
@@ -153,7 +164,12 @@ async function streamChatCompletion(opts) {
     cleanup();
     if (externalAborted) throw new AbortedError();
     if (e.name === 'AbortError') {
-      throw new ApiError(0, 'Request timed out — connection may have dropped.');
+      throw new ApiError(
+        0,
+        `No response from Gemini after ${Math.round(
+          CHAT_TIMEOUT_MS / 1000
+        )}s — the free tier is heavily queued right now. Try again shortly.`
+      );
     }
     throw new ApiError(0, `Network error: ${e.message}`);
   }
@@ -176,6 +192,7 @@ async function streamChatCompletion(opts) {
 
   try {
     outer: for await (const chunk of res.body) {
+      bump();
       buffer += decoder.decode(chunk, { stream: true });
       let nl;
       while ((nl = buffer.indexOf('\n')) >= 0) {
@@ -236,7 +253,10 @@ async function streamChatCompletion(opts) {
     } else if (e instanceof ApiError) {
       throw e;
     } else if (e.name === 'AbortError') {
-      throw new ApiError(res.status, 'Stream timed out — connection may have dropped.');
+      throw new ApiError(
+        res.status,
+        'Stream stalled — no data from Gemini. Try again; /retry resends your message.'
+      );
     } else {
       throw new ApiError(res.status, `Connection dropped mid-stream: ${e.message}`);
     }

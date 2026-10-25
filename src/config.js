@@ -30,8 +30,11 @@ const KNOWN_FREE_MODELS = [
   'gemini-2.5-pro',
 ];
 
-const CHAT_TIMEOUT_MS = 60000;
-const MODELS_TIMEOUT_MS = 15000;
+// Gemini free tier queues requests: measured TTFB of ~110s, occasionally >180s.
+// This is an *idle* budget that resets on every chunk, so it only governs how
+// long we wait in total silence — not how long a reply may stream for.
+const CHAT_TIMEOUT_MS = 300000;
+const MODELS_TIMEOUT_MS = 30000;
 const SHELL_TIMEOUT_MS = 45000;
 const SHELL_MAX_BUFFER = 8 * 1024 * 1024;
 const FETCH_TIMEOUT_MS = 30000;
